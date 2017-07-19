@@ -355,6 +355,20 @@ namespace NuGet.PackageManagement.VisualStudio
             }
         }
 
+        private bool IsSolutionLoadDeferred()
+        {
+#if VS14
+            return true;
+#else
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            var vsSolution = _serviceProvider.GetService(typeof(SVsSolution)) as IVsSolution7;
+            Assumes.Present(vsSolution);
+
+            return vsSolution.IsSolutionLoadDeferred();
+#endif
+        }
+
         private IEnumerable<IVsHierarchy> GetDeferredProjects()
         {
 #if VS14
@@ -894,12 +908,12 @@ namespace NuGet.PackageManagement.VisualStudio
         }
 
 
-        #region IVsSelectionEvents
+#region IVsSelectionEvents
 
         public int OnCmdUIContextChanged(uint dwCmdUICookie, int fActive)
         {
             if (dwCmdUICookie == _solutionLoadedUICookie
-                && fActive == 1)
+                && fActive == 1 && !IsSolutionLoadDeferred())
             {
                 OnSolutionExistsAndFullyLoaded();
             }
@@ -925,9 +939,9 @@ namespace NuGet.PackageManagement.VisualStudio
             }
         }
 
-        #endregion IVsSelectionEvents
+#endregion IVsSelectionEvents
 
-        #region IVsSolutionManager
+#region IVsSolutionManager
 
         public async Task<NuGetProject> GetOrCreateProjectAsync(EnvDTE.Project project, INuGetProjectContext projectContext)
         {
@@ -1024,6 +1038,6 @@ namespace NuGet.PackageManagement.VisualStudio
 #endif
         }
 
-        #endregion
+#endregion
     }
 }
