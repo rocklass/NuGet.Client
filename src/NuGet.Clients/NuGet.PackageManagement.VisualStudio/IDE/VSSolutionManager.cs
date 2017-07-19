@@ -358,7 +358,8 @@ namespace NuGet.PackageManagement.VisualStudio
         private bool IsSolutionLoadDeferred()
         {
 #if VS14
-            return true;
+            // Not applicable for Dev14 so always return false.
+            return false;
 #else
             ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -912,6 +913,7 @@ namespace NuGet.PackageManagement.VisualStudio
 
         public int OnCmdUIContextChanged(uint dwCmdUICookie, int fActive)
         {
+            // Disabled NuGet Init to avoid hang if solution is in deferred.
             if (dwCmdUICookie == _solutionLoadedUICookie
                 && fActive == 1 && !IsSolutionLoadDeferred())
             {
