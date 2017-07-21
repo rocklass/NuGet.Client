@@ -1,4 +1,4 @@
-﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -91,15 +91,6 @@ namespace NuGet.Commands
             requests.AddRange(ToolRestoreUtility.GetSubSetRequests(toolRequests));
 
             return requests;
-        }
-
-        public static IEnumerable<ExternalProjectReference> GetExternalClosure(DependencyGraphSpec dgFile, string projectNameToRestore)
-        {
-            var closure = dgFile.GetClosure(projectNameToRestore);
-
-            var externalClosure = closure.Select(GetExternalProject);
-            return externalClosure;
-
         }
 
         private static ExternalProjectReference GetExternalProject(PackageSpec rootProject)
