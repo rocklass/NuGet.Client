@@ -20,7 +20,7 @@ namespace NuGet.Commands {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Strings {
@@ -1157,6 +1157,15 @@ namespace NuGet.Commands {
         internal static string PersistDGFile {
             get {
                 return ResourceManager.GetString("PersistDGFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Persisting no-op dg to &apos;{0}&apos;..
+        /// </summary>
+        internal static string PersistNoOpDGFile {
+            get {
+                return ResourceManager.GetString("PersistNoOpDGFile", resourceCulture);
             }
         }
         

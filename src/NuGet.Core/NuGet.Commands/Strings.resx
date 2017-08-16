@@ -600,4 +600,7 @@ For more information, visit http://docs.nuget.org/docs/reference/command-line-re
   <data name="Error_EmptySourceFileProjectDirectory" xml:space="preserve">
     <value>The project directory for the source file '{0}' could not be found.</value>
   </data>
+  <data name="PersistNoOpDGFile" xml:space="preserve">
+    <value>Persisting no-op dg to '{0}'.</value>
+  </data>
 </root>
