@@ -55,6 +55,8 @@ namespace NuGet.PackageManagement.UI
 
         private bool _missingPackageStatus;
 
+        private NuGetProjectDependencyVersionLookup _projectDependencyVersionLookup;
+
         private readonly INuGetUILogger _uiLogger;
 
         public PackageManagerModel Model { get; }
@@ -90,16 +92,19 @@ namespace NuGet.PackageManagement.UI
             _uiLogger = uiLogger;
             Model = model;
             Settings = nugetSettings;
+            _projectDependencyVersionLookup = new NuGetProjectDependencyVersionLookup();
+
             if (!Model.IsSolution)
             {
-                _detailModel = new PackageDetailControlModel(Model.Context.SolutionManager, Model.Context.Projects);
+                _detailModel = new PackageDetailControlModel(Model.Context.SolutionManager, Model.Context.Projects, _projectDependencyVersionLookup);
             }
             else
             {
                 _detailModel = new PackageSolutionDetailControlModel(
                     Model.Context.SolutionManager,
                     Model.Context.Projects,
-                    Model.Context.PackageManagerProviders);
+                    Model.Context.PackageManagerProviders,
+                    _projectDependencyVersionLookup);
             }
 
             InitializeComponent();
@@ -137,6 +142,7 @@ namespace NuGet.PackageManagement.UI
 
             Loaded += (_, __) =>
             {
+                ReadAssetsFileAndUpdateDependencyLookup();
                 SearchPackagesAndRefreshUpdateCount(_windowSearchHost.SearchQuery.SearchString, useCache: false);
                 RefreshConsolidatablePackagesCount();
             };
@@ -620,7 +626,7 @@ namespace NuGet.PackageManagement.UI
             {
                 await NuGetUIThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-                var loadContext = new PackageLoadContext(ActiveSources, Model.IsSolution, Model.Context);
+                var loadContext = new PackageLoadContext(ActiveSources, Model.IsSolution, Model.Context, _projectDependencyVersionLookup);
 
                 if (useCache)
                 {
@@ -682,7 +688,7 @@ namespace NuGet.PackageManagement.UI
                 await NuGetUIThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
                 _topPanel._labelUpgradeAvailable.Count = 0;
-                var loadContext = new PackageLoadContext(ActiveSources, Model.IsSolution, Model.Context);
+                var loadContext = new PackageLoadContext(ActiveSources, Model.IsSolution, Model.Context, _projectDependencyVersionLookup);
                 var packageFeed = await CreatePackageFeedAsync(loadContext, ItemFilter.UpdatesAvailable, _uiLogger);
                 var loader = new PackageItemLoader(
                     loadContext, packageFeed, includePrerelease: IncludePrerelease);
@@ -701,6 +707,21 @@ namespace NuGet.PackageManagement.UI
                 _topPanel._labelUpgradeAvailable.Count = Model.CachedUpdates.Packages.Count;
             });
         }
+        private void ReadAssetsFileAndUpdateDependencyLookup()
+        {
+            NuGetUIThreadHelper.JoinableTaskFactory.RunAsync(async () =>
+            {
+                // Make sure to be off the UI thread to perform non-UI operations
+                await TaskScheduler.Default;
+
+                _projectDependencyVersionLookup =
+                    await NuGetProjectDependencyVersionLookup.GetLookupFromAssetsFileForProjectsAsync(Model.Context.Projects);
+
+                _detailModel.DependencyVersionLookup = _projectDependencyVersionLookup;
+
+                Refresh();
+            });
+        }
 
         private void RefreshConsolidatablePackagesCount()
         {
@@ -708,7 +729,7 @@ namespace NuGet.PackageManagement.UI
             {
                 await NuGetUIThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 _topPanel._labelConsolidate.Count = 0;
-                var loadContext = new PackageLoadContext(ActiveSources, Model.IsSolution, Model.Context);
+                var loadContext = new PackageLoadContext(ActiveSources, Model.IsSolution, Model.Context, _projectDependencyVersionLookup);
                 var packageFeed = await CreatePackageFeedAsync(loadContext, ItemFilter.Consolidate, _uiLogger);
                 var loader = new PackageItemLoader(
                     loadContext, packageFeed, includePrerelease: IncludePrerelease);
@@ -747,7 +768,7 @@ namespace NuGet.PackageManagement.UI
 
                 _packageDetail.ScrollToHome();
 
-                var context = new PackageLoadContext(ActiveSources, Model.IsSolution, Model.Context);
+                var context = new PackageLoadContext(ActiveSources, Model.IsSolution, Model.Context, _projectDependencyVersionLookup);
                 var metadataProvider = CreatePackageMetadataProvider(context);
                 await _detailModel.LoadPackageMetadaAsync(metadataProvider, CancellationToken.None);
             }
@@ -763,16 +784,18 @@ namespace NuGet.PackageManagement.UI
             }
 
             var metadataProvider = CreatePackageMetadataProvider(context);
-            var installedPackages = await context.GetInstalledPackagesAsync();
-
-            if (filter == ItemFilter.Installed)
-            {
-                return new InstalledPackageFeed(installedPackages, metadataProvider, logger);
-            }
 
             if (filter == ItemFilter.Consolidate)
             {
+                var installedPackages = await context.GetInstalledPackagesAsync();
                 return new ConsolidatePackageFeed(installedPackages, metadataProvider, logger);
+            }
+
+            var resolvedPackages = await context.GetResolvedPackagesAsync();
+
+            if (filter == ItemFilter.Installed)
+            {
+                return new InstalledPackageFeed(resolvedPackages, metadataProvider, logger);
             }
 
             // Search all / updates available cannot work without a source repo
@@ -784,11 +807,12 @@ namespace NuGet.PackageManagement.UI
             if (filter == ItemFilter.UpdatesAvailable)
             {
                 return new UpdatePackageFeed(
-                    installedPackages,
+                    resolvedPackages,
                     metadataProvider,
                     context.Projects,
                     context.CachedPackages,
-                    logger);
+                    logger,
+                    context.DependencyVersionLookup);
             }
 
             throw new InvalidOperationException("Unsupported feed type");
@@ -850,7 +874,7 @@ namespace NuGet.PackageManagement.UI
                 {
                     await NuGetUIThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                     var installedPackages = await PackageCollection.FromProjectsAsync(Model.Context.Projects,
-                        CancellationToken.None);
+                        _projectDependencyVersionLookup, CancellationToken.None);
                     _packageList.UpdatePackageStatus(installedPackages.ToArray());
                 });
 
@@ -862,10 +886,10 @@ namespace NuGet.PackageManagement.UI
             _packageDetail?.Refresh();
         }
 
-        private static PackageIdentity[] GetInstalledPackages(IEnumerable<NuGetProject> projects)
+        private static PackageIdentity[] GetInstalledPackages(IEnumerable<NuGetProject> projects, NuGetProjectDependencyVersionLookup dependencyLookup)
         {
             var installedPackages = NuGetUIThreadHelper.JoinableTaskFactory.Run(
-                () => PackageCollection.FromProjectsAsync(projects, CancellationToken.None));
+                () => PackageCollection.FromProjectsAsync(projects, dependencyLookup, CancellationToken.None));
 
             return installedPackages.ToArray();
         }

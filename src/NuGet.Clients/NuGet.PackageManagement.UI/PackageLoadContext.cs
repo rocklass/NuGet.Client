@@ -17,6 +17,7 @@ namespace NuGet.PackageManagement.UI
     internal class PackageLoadContext
     {
         private readonly Task<PackageCollection> _installedPackagesTask;
+        private readonly Task<PackageCollection> _resolvedPackagesTask;
 
         public IEnumerable<SourceRepository> SourceRepositories { get; private set; }
 
@@ -33,10 +34,13 @@ namespace NuGet.PackageManagement.UI
 
         public IVsSolutionManager SolutionManager { get; private set; }
 
+        public readonly NuGetProjectDependencyVersionLookup DependencyVersionLookup;
+
         public PackageLoadContext(
             IEnumerable<SourceRepository> sourceRepositories,
             bool isSolution,
-            INuGetUIContext uiContext)
+            INuGetUIContext uiContext,
+            NuGetProjectDependencyVersionLookup dependencyVersionLookup)
         {
             SourceRepositories = sourceRepositories;
             IsSolution = isSolution;
@@ -44,11 +48,14 @@ namespace NuGet.PackageManagement.UI
             Projects = (uiContext.Projects ?? Enumerable.Empty<NuGetProject>()).ToArray();
             PackageManagerProviders = uiContext.PackageManagerProviders;
             SolutionManager = uiContext.SolutionManager;
+            DependencyVersionLookup = dependencyVersionLookup;
 
-            _installedPackagesTask = PackageCollection.FromProjectsAsync(Projects, CancellationToken.None);
+            _installedPackagesTask = PackageCollection.FromProjectsAsync(Projects, null, CancellationToken.None);
+            _resolvedPackagesTask = PackageCollection.FromProjectsAsync(Projects, DependencyVersionLookup, CancellationToken.None);
         }
 
         public Task<PackageCollection> GetInstalledPackagesAsync() =>_installedPackagesTask;
+        public Task<PackageCollection> GetResolvedPackagesAsync() => _resolvedPackagesTask;
 
         // Returns the list of frameworks that we need to pass to the server during search
         public IEnumerable<string> GetSupportedFrameworks()

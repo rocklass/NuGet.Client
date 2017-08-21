@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using NuGet.Packaging;
 using NuGet.ProjectManagement;
 
 namespace NuGet.PackageManagement.VisualStudio
@@ -37,11 +38,20 @@ namespace NuGet.PackageManagement.VisualStudio
 
         public bool ContainsId(string packageId) => _uniqueIds.Contains(packageId);
 
-        public static async Task<PackageCollection> FromProjectsAsync(IEnumerable<NuGetProject> projects, CancellationToken cancellationToken)
+        public static async Task<PackageCollection> FromProjectsAsync(IEnumerable<NuGetProject> projects, NuGetProjectDependencyVersionLookup dependencyVersionLookup, CancellationToken cancellationToken)
         {
             // Read package references from all projects.
-            var tasks = projects
-                .Select(project => project.GetInstalledPackagesAsync(cancellationToken));
+            IEnumerable<Task<IEnumerable<PackageReference>>> tasks;
+            if (dependencyVersionLookup == null)
+            {
+                tasks = projects.Select(project => project.GetInstalledPackagesAsync(cancellationToken));
+            }
+            else
+            {
+                tasks = projects
+                    .Select(project => dependencyVersionLookup.GetResolvedPackagesIfAvailableAsync(project, cancellationToken));
+            }
+
             var packageReferences = await Task.WhenAll(tasks);
 
             // Group all package references for an id/version into a single item.

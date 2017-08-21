@@ -40,9 +40,12 @@ namespace NuGet.PackageManagement.UI
 
         private Dictionary<NuGetVersion, DetailedPackageMetadata> _metadataDict;
 
-        protected DetailControlModel(IEnumerable<NuGetProject> nugetProjects)
+        public NuGetProjectDependencyVersionLookup DependencyVersionLookup { get; set; }
+
+        protected DetailControlModel(IEnumerable<NuGetProject> nugetProjects, NuGetProjectDependencyVersionLookup dependencyLookup)
         {
             _nugetProjects = nugetProjects;
+            DependencyVersionLookup = dependencyLookup;
             _options = new Options();
 
             // Show dependency behavior and file conflict options if any of the projects are non-build integrated
@@ -110,7 +113,7 @@ namespace NuGet.PackageManagement.UI
                 }
                 else if (project is BuildIntegratedNuGetProject)
                 {
-                    var packageReferences = await project.GetInstalledPackagesAsync(CancellationToken.None);
+                    var packageReferences = await DependencyVersionLookup.GetResolvedPackagesIfAvailableAsync(project, CancellationToken.None);
 
                     // First the lowest auto referenced version of this package.
                     var autoReferenced = packageReferences.Where(e => StringComparer.OrdinalIgnoreCase.Equals(searchResultPackage.Id, e.PackageIdentity.Id)
@@ -194,7 +197,7 @@ namespace NuGet.PackageManagement.UI
                         var installedPackages = new List<Packaging.PackageReference>();
                         foreach (var project in _nugetProjects)
                         {
-                            var projectInstalledPackages = await project.GetInstalledPackagesAsync(CancellationToken.None);
+                            var projectInstalledPackages = await DependencyVersionLookup.GetResolvedPackagesIfAvailableAsync(project, CancellationToken.None);
                             installedPackages.AddRange(projectInstalledPackages);
                         }
                         return installedPackages.Select(e => e.PackageIdentity).Distinct(PackageIdentity.Comparer);
@@ -214,7 +217,7 @@ namespace NuGet.PackageManagement.UI
                     var installedPackages = new HashSet<Packaging.Core.PackageDependency>();
                     foreach (var project in _nugetProjects)
                     {
-                        var dependencies = await GetDependencies(project);
+                        var dependencies = await GetDependencies(project, DependencyVersionLookup);
 
                         installedPackages.UnionWith(dependencies);
                     }
@@ -223,11 +226,11 @@ namespace NuGet.PackageManagement.UI
             }
         }
 
-        private static async Task<IReadOnlyList<Packaging.Core.PackageDependency>> GetDependencies(NuGetProject project)
+        private static async Task<IReadOnlyList<Packaging.Core.PackageDependency>> GetDependencies(NuGetProject project, NuGetProjectDependencyVersionLookup dependencyLookup)
         {
             var results = new List<Packaging.Core.PackageDependency>();
 
-            var projectInstalledPackages = await project.GetInstalledPackagesAsync(CancellationToken.None);
+            var projectInstalledPackages = await dependencyLookup.GetResolvedPackagesIfAvailableAsync(project, CancellationToken.None);
             var buildIntegratedProject = project as BuildIntegratedNuGetProject;
 
             foreach (var package in projectInstalledPackages)

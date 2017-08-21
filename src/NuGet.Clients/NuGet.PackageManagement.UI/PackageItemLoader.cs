@@ -21,7 +21,7 @@ namespace NuGet.PackageManagement.UI
         private readonly bool _includePrerelease;
 
         private readonly IPackageFeed _packageFeed;
-        private PackageCollection _installedPackages;
+        private PackageCollection _resolvedPackages;
         private IEnumerable<Packaging.PackageReference> _packageReferences;
 
         private SearchFilter SearchFilter => new SearchFilter(includePrerelease: _includePrerelease)
@@ -260,7 +260,7 @@ namespace NuGet.PackageManagement.UI
         public async Task UpdateStateAndReportAsync(SearchResult<IPackageSearchMetadata> searchResult, IProgress<IItemLoaderState> progress, CancellationToken cancellationToken)
         {
             // cache installed packages here for future use
-            _installedPackages = await _context.GetInstalledPackagesAsync();
+            _resolvedPackages = await _context.GetResolvedPackagesAsync();
 
             // fetch package references from all the projects and cache locally
             // for solution view, we'll always show the highest available version
@@ -318,7 +318,7 @@ namespace NuGet.PackageManagement.UI
                         AllowedVersions = allowedVersions,
                         PrefixReserved = metadata.PrefixReserved && IsOnlyLoadingFromNuGetOrg
                     };
-                    listItem.UpdatePackageStatus(_installedPackages);
+                    listItem.UpdatePackageStatus(_resolvedPackages);
 
                     if (!_context.IsSolution && _context.PackageManagerProviders.Any())
                     {

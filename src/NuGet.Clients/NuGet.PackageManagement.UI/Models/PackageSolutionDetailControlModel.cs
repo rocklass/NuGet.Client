@@ -7,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using Microsoft.VisualStudio.Shell;
+using NuGet.PackageManagement.VisualStudio;
 using NuGet.ProjectManagement;
 using NuGet.Versioning;
 using NuGet.VisualStudio;
@@ -73,7 +74,15 @@ namespace NuGet.PackageManagement.UI
                     var installedVersion = GetInstalledPackage(project.NuGetProject, Id);
                     if (installedVersion != null)
                     {
-                        project.InstalledVersion = installedVersion.PackageIdentity.Version;
+                        NuGetVersion version;
+                        if (DependencyVersionLookup.TryGet(project.NuGetProject, Id, out version))
+                        {
+                            project.InstalledVersion = version;
+                        }
+                        else
+                        {
+                            project.InstalledVersion = installedVersion.PackageIdentity.Version;
+                        }
                         hash.Add(installedVersion.PackageIdentity.Version);
                         project.AutoReferenced = (installedVersion as BuildIntegratedPackageReference)?.Dependency?.AutoReferenced == true;
                     }
@@ -119,6 +128,14 @@ namespace NuGet.PackageManagement.UI
         {
             return NuGetUIThreadHelper.JoinableTaskFactory.Run(async delegate
             {
+                NuGetVersion version;
+                if (DependencyVersionLookup.TryGet(project, packageId, out version))
+                {
+                    return version;
+                }
+
+                // If the assets file doesn't have the appropriate information, fall back to getting installed packages
+                // this is true if the project doesn't support assets file or if restore hasn't run
                 var installedPackages = await project.GetInstalledPackagesAsync(CancellationToken.None);
                 var installedPackage = installedPackages
                     .FirstOrDefault(p => StringComparer.OrdinalIgnoreCase.Equals(p.PackageIdentity.Id, packageId));
@@ -222,9 +239,10 @@ namespace NuGet.PackageManagement.UI
         public PackageSolutionDetailControlModel(
             ISolutionManager solutionManager,
             IEnumerable<NuGetProject> projects,
-            IEnumerable<IVsPackageManagerProvider> packageManagerProviders)
+            IEnumerable<IVsPackageManagerProvider> packageManagerProviders,
+            NuGetProjectDependencyVersionLookup dependencyLookup)
             :
-                base(projects)
+                base(projects, dependencyLookup)
         {
             _solutionManager = solutionManager;
             _solutionManager.NuGetProjectAdded += SolutionProjectChanged;

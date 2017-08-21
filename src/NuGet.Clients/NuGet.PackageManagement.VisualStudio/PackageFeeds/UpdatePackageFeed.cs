@@ -22,43 +22,23 @@ namespace NuGet.PackageManagement.VisualStudio
         private readonly PackageSearchMetadataCache _cachedUpdates;
         private readonly Common.ILogger _logger;
         private readonly NuGetProject[] _projects;
+        private readonly NuGetProjectDependencyVersionLookup _dependencyVersionLookup;
 
         public UpdatePackageFeed(
             IEnumerable<PackageCollectionItem> installedPackages,
             IPackageMetadataProvider metadataProvider,
             NuGetProject[] projects,
             PackageSearchMetadataCache optionalCachedUpdates,
-            Common.ILogger logger)
+            Common.ILogger logger,
+            NuGetProjectDependencyVersionLookup dependencyVersionLookup)
         {
-            if (installedPackages == null)
-            {
-                throw new ArgumentNullException(nameof(installedPackages));
-            }
-
-            _installedPackages = installedPackages;
-
-            if (metadataProvider == null)
-            {
-                throw new ArgumentNullException(nameof(metadataProvider));
-            }
-
-            _metadataProvider = metadataProvider;
-
-            if (projects == null)
-            {
-                throw new ArgumentNullException(nameof(projects));
-            }
-
-            _projects = projects;
+            _installedPackages = installedPackages ?? throw new ArgumentNullException(nameof(installedPackages));
+            _metadataProvider = metadataProvider ?? throw new ArgumentNullException(nameof(metadataProvider));
+            _projects = projects ?? throw new ArgumentNullException(nameof(projects));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             _cachedUpdates = optionalCachedUpdates;
-
-            if (logger == null)
-            {
-                throw new ArgumentNullException(nameof(logger));
-            }
-
-            _logger = logger;
+            _dependencyVersionLookup = dependencyVersionLookup;
         }
 
         public override async Task<SearchResult<IPackageSearchMetadata>> ContinueSearchAsync(ContinuationToken continuationToken, CancellationToken cancellationToken)
@@ -122,9 +102,16 @@ namespace NuGet.PackageManagement.VisualStudio
             foreach(var project in _projects)
             {
                 var installed = await project.GetInstalledPackagesAsync(cancellationToken);
+                DependencyVersionLookup projectLookup;
+                var hasLookup = _dependencyVersionLookup.TryGet(project, out projectLookup);
+                
                 foreach (var installedPackage in installed)
                 {
-                    var installedVersion = installedPackage.PackageIdentity.Version;
+                    NuGetVersion installedVersion;
+                    if (!hasLookup || !projectLookup.TryGet(installedPackage.PackageIdentity.Id, out installedVersion))
+                    {
+                        installedVersion = installedPackage.PackageIdentity.Version;
+                    }
                     var allowedVersions = installedPackage.AllowedVersions ?? VersionRange.All;
 
                     // filter packages based on current package identity

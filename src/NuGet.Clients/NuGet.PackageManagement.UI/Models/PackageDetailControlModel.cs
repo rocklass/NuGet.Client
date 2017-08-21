@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using NuGet.Packaging.Core;
+using NuGet.PackageManagement.VisualStudio;
 using NuGet.ProjectManagement;
 using NuGet.Resolver;
 using NuGet.Versioning;
@@ -20,8 +21,9 @@ namespace NuGet.PackageManagement.UI
 
         public PackageDetailControlModel(
             ISolutionManager solutionManager,
-            IEnumerable<NuGetProject> nugetProjects)
-            : base(nugetProjects)
+            IEnumerable<NuGetProject> nugetProjects,
+            NuGetProjectDependencyVersionLookup dependencyLookup)
+            : base(nugetProjects, dependencyLookup)
         {
             _solutionManager = solutionManager;
             _solutionManager.NuGetProjectUpdated += NuGetProjectChanged;
