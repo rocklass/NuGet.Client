@@ -34,8 +34,9 @@ namespace NuGet.PackageManagement.UI.Test
 
             var sourceRepositoryProvider = TestSourceRepositoryUtility.CreateSourceRepositoryProvider(new[] { source1, source2 });
             var repositories = sourceRepositoryProvider.GetRepositories();
+            var lookup = new NuGetProjectDependencyVersionLookup();
 
-            var context = new PackageLoadContext(repositories, false, uiContext);
+            var context = new PackageLoadContext(repositories, false, uiContext, lookup);
 
             var packageFeed = new MultiSourcePackageFeed(repositories, logger: null);
             var loader = new PackageItemLoader(context, packageFeed, "nuget");
@@ -76,8 +77,9 @@ namespace NuGet.PackageManagement.UI.Test
 
             var sourceRepositoryProvider = TestSourceRepositoryUtility.CreateSourceRepositoryProvider(new[] { source1, source2 });
             var repositories = sourceRepositoryProvider.GetRepositories();
+            var lookup = new NuGetProjectDependencyVersionLookup();
 
-            var context = new PackageLoadContext(repositories, false, uiContext);
+            var context = new PackageLoadContext(repositories, false, uiContext, lookup);
 
             var packageFeed = new MultiSourcePackageFeed(repositories, logger: null);
             var loader = new PackageItemLoader(context, packageFeed, "nuget");
@@ -96,7 +98,8 @@ namespace NuGet.PackageManagement.UI.Test
                 .Setup(x => x.SolutionManager)
                 .Returns(solutionManager);
 
-            var context = new PackageLoadContext(null, false, uiContext);
+            var lookup = new NuGetProjectDependencyVersionLookup();
+            var context = new PackageLoadContext(null, false, uiContext, lookup);
             var packageFeed = new TestPackageFeed();
             var loader = new PackageItemLoader(context, packageFeed, TestSearchTerm, true);
 
