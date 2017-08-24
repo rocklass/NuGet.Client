@@ -41,5 +41,17 @@ namespace NuGet.Tests.Apex
             var project = NugetPackageManager.Dte.Solution.Projects.Item(projectName);
             return this.IsFalse(this.NugetPackageManager.InstallerServices.IsPackageInstalled(project, packageName), "Expected NuGet package {0} to not be installed in project {1}.", packageName, project.Name);
         }
+
+        public bool NuGetPackageManagerUIIsOpenForProjecName(string projectName)
+        {
+            var mainWindowCaption = NugetPackageManager.Dte.ActiveWindow.Caption;
+            return IsTrue(mainWindowCaption.Equals(string.Format(@"NuGet: {0}", projectName), StringComparison.Ordinal), "Expected Package Manager for project UI to be open");
+        }
+
+        public bool NuGetPowerShellConsoleIsOpen()
+        {
+            var mainWindowCaption = NugetPackageManager.Dte.ActiveWindow.Caption;
+            return IsTrue(mainWindowCaption.Equals("Package Manager Console", StringComparison.Ordinal), "Expected Package Manager Console to be open");
+        }
     }
 }

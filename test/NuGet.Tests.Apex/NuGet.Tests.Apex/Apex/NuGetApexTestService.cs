@@ -8,6 +8,7 @@ using EnvDTE;
 using Microsoft.Test.Apex;
 using Microsoft.Test.Apex.VisualStudio;
 using Microsoft.Test.Apex.VisualStudio.Solution;
+using NuGet.PackageManagement.VisualStudio;
 using NuGet.VisualStudio;
 
 namespace NuGet.Tests.Apex
@@ -133,6 +134,32 @@ namespace NuGet.Tests.Apex
             {
                 Logger.WriteException(EntryType.Warning, e, string.Format("An error occured while attempting to uninstall package {0}", packageName));
             }
+        }
+
+        /// <summary>
+        /// Open NuGet Manager UI for project level
+        /// </summary>
+        public void OpenNuGetPackageManagerUIForProject()
+        {
+            NuGetUIThreadHelper.JoinableTaskFactory.Run(async () =>
+            {
+                await NuGetUIThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+                Dte.ExecuteCommand("Project.ManageNuGetPackages");
+            });
+        }
+
+        /// <summary>
+        /// Open NuGet Powershell Management Console
+        /// </summary>
+        public void OpenPowershellConsole()
+        {
+            NuGetUIThreadHelper.JoinableTaskFactory.Run(async () =>
+            {
+                await NuGetUIThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+                Dte.ExecuteCommand("View.PackageManagerConsole");
+            });
         }
     }
 }

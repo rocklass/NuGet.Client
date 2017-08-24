@@ -33,7 +33,8 @@ namespace NuGet.Tests.Apex
             nugetTestService.InstallPackage(project.UniqueName, "newtonsoft.json");
 
             // Assert
-            nugetTestService.Verify.PackageIsInstalled(project.UniqueName, "newtonsoft.json");
+            Assert.True(nugetTestService.Verify.PackageIsInstalled(project.UniqueName, "newtonsoft.json"));
+
         }
 
         [StaFact]
@@ -50,11 +51,11 @@ namespace NuGet.Tests.Apex
 
             // Act & Assert
             nugetTestService.InstallPackage(project.UniqueName, "newtonsoft.json");
-            nugetTestService.Verify.PackageIsInstalled(project.UniqueName, "newtonsoft.json");
+            Assert.True(nugetTestService.Verify.PackageIsInstalled(project.UniqueName, "newtonsoft.json"));
 
             // Act & Assert
             nugetTestService.UninstallPackage(project.UniqueName, "newtonsoft.json");
-            nugetTestService.Verify.PackageIsNotInstalled(project.UniqueName, "newtonsoft.json");
+            Assert.True(nugetTestService.Verify.PackageIsNotInstalled(project.UniqueName, "newtonsoft.json"));
         }
     }
 }
