@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -16,6 +17,7 @@ namespace NuGet.Tests.Apex
         private readonly IOperations _operations;
         private readonly IAssertionVerifier _verifier;
         private readonly ITestLogger _testLogger;
+        private IList<string> _nugetTestContracts = new List<string> {"NuGet.PackageManagement.UI.TestContract.dll"};
 
         public VisualStudioOperationsFixture()
         {
@@ -37,6 +39,18 @@ namespace NuGet.Tests.Apex
                 if (_visualStudioHostConfiguration == null)
                 {
                     _visualStudioHostConfiguration = new VisualStudioHostConfiguration();
+
+                    var assemblyFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
+                    foreach(var testAssembly in _nugetTestContracts)
+                    {
+                        var assemblyPath = Path.Combine(assemblyFolder, testAssembly);
+
+                        if (File.Exists((assemblyPath)))
+                        {
+                            _visualStudioHostConfiguration.AddCompositionAssembly(assemblyPath);
+                        }
+                    }
                     _visualStudioHostConfiguration.AddCompositionAssembly(Assembly.GetExecutingAssembly().Location);
                 }
                 return _visualStudioHostConfiguration;
