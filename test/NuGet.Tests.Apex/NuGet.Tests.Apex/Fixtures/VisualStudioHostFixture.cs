@@ -30,14 +30,6 @@ namespace NuGet.Tests.Apex
             }
         }
 
-        public void StopHost()
-        {
-            if (_visualStudioHost != null && _visualStudioHost.IsRunning)
-            {
-                _visualStudioHost.Stop();
-            }
-        }
-
         public void Dispose()
         {
             if (_visualStudioHost != null && _visualStudioHost.IsRunning)
