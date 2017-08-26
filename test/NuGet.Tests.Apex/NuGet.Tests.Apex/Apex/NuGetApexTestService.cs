@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
@@ -8,6 +8,7 @@ using EnvDTE;
 using Microsoft.Test.Apex;
 using Microsoft.Test.Apex.VisualStudio;
 using Microsoft.Test.Apex.VisualStudio.Solution;
+using NuGet.PackageManagement.UI.TestContract;
 using NuGet.VisualStudio;
 
 namespace NuGet.Tests.Apex
@@ -15,6 +16,14 @@ namespace NuGet.Tests.Apex
     [Export(typeof(NuGetApexTestService))]
     public class NuGetApexTestService : VisualStudioTestService<NuGetApexVerifier>
     {
+        [Import]
+        private NuGetApexUITestService NuGetApexUITestService { get; set; }
+
+        public NuGetApexTestService()
+        {
+            //_nuGetApexUITestService = new NuGetApexUITestService();
+        }
+
         /// <summary>
         /// Gets the NuGet IVsPackageInstallerServices
         /// </summary>
@@ -133,6 +142,11 @@ namespace NuGet.Tests.Apex
             {
                 Logger.WriteException(EntryType.Warning, e, string.Format("An error occured while attempting to uninstall package {0}", packageName));
             }
+        }
+
+        public void SeachPackgeFromUI(string searchText)
+        {
+            NuGetApexUITestService.UISearch(searchText);
         }
     }
 }

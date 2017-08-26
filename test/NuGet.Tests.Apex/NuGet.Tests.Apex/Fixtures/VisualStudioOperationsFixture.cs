@@ -39,8 +39,11 @@ namespace NuGet.Tests.Apex
                 if (_visualStudioHostConfiguration == null)
                 {
                     _visualStudioHostConfiguration = new VisualStudioHostConfiguration();
+                    var codeBase = Assembly.GetExecutingAssembly().CodeBase;
+                    var uri = new UriBuilder(codeBase);
+                    var path = Uri.UnescapeDataString(uri.Path);
 
-                    var assemblyFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                    var assemblyFolder = Path.GetDirectoryName(path);
 
                     foreach(var testAssembly in _nugetTestContracts)
                     {
@@ -52,6 +55,8 @@ namespace NuGet.Tests.Apex
                         }
                     }
                     _visualStudioHostConfiguration.AddCompositionAssembly(Assembly.GetExecutingAssembly().Location);
+
+                    _visualStudioHostConfiguration.InProcessHostConstraints = new List<ITypeConstraint>() { new NuGetTypeConstraint() };
                 }
                 return _visualStudioHostConfiguration;
             }

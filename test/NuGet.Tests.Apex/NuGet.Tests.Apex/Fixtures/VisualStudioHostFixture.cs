@@ -27,6 +27,7 @@ namespace NuGet.Tests.Apex
             {
                 _messageFilterSingleton = new RetryMessageFilter();
                 _visualStudioHost = Operations.CreateAndStartHost<VisualStudioHost>(VisualStudioHostConfiguration);
+                var compose = VisualStudioHostConfiguration.CompositionAssemblies;
             }
         }
 
