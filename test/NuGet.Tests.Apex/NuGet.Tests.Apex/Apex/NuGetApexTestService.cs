@@ -8,14 +8,19 @@ using EnvDTE;
 using Microsoft.Test.Apex;
 using Microsoft.Test.Apex.VisualStudio;
 using Microsoft.Test.Apex.VisualStudio.Solution;
+using Microsoft.VisualStudio.Shell.Interop;
 using NuGet.PackageManagement.VisualStudio;
+using NuGet.ProjectManagement;
 using NuGet.VisualStudio;
+using NuGetVSExtension;
 
 namespace NuGet.Tests.Apex
 {
     [Export(typeof(NuGetApexTestService))]
     public class NuGetApexTestService : VisualStudioTestService<NuGetApexVerifier>
     {
+
+        protected internal IVsUIShell VsUIShell => VisualStudioObjectProviders.GetService<SVsUIShell, IVsUIShell>();
         /// <summary>
         /// Gets the NuGet IVsPackageInstallerServices
         /// </summary>
@@ -146,6 +151,61 @@ namespace NuGet.Tests.Apex
                 await NuGetUIThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
                 Dte.ExecuteCommand("Project.ManageNuGetPackages");
+            });
+        }
+
+        /// <summary>
+        /// Returns a PackageManagerControl for a  NuGet package manager open at solution level if exists
+        /// </summary>
+        public INuGetUIWindow GetManagerControlForSolution()
+        {
+            NuGetUIThreadHelper.JoinableTaskFactory.Run(async () =>
+            {
+                await NuGetUIThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                foreach (var windowFrame in VsUtility.GetDocumentWindows(VsUIShell))
+                {
+                    var packageManagerControl = VsUtility.GetPackageManagerControl(windowFrame);
+                    if (packageManagerControl.Model.IsSolution)
+                    {
+                        return packageManagerControl;
+                    }
+                }
+                return null;
+            });
+        }
+
+        /// <summary>
+        /// Returns the PackageManagerControl if the given project NuGet package manager window is open
+        /// </summary>
+        public INuGetUIWindow GetManagerControlForProject(Project project)
+        {
+            NuGetUIThreadHelper.JoinableTaskFactory.Run(async () =>
+            {
+                await NuGetUIThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+                foreach (var windowFrame in VsUtility.GetDocumentWindows(VsUIShell))
+                {
+                    var packageManagerControl = VsUtility.GetPackageManagerControl(windowFrame);
+
+                    if (packageManagerControl.Model.IsSolution)
+                    {
+                        continue;
+                    }
+
+                    var projects = packageManagerControl.Model.Context.Projects;
+                    if (projects.Count() != 1)
+                    {
+                        continue;
+                    }
+
+                    var existingProject = projects.First();
+                    var projectName = existingProject.GetMetadata<string>(NuGetProjectMetadataKeys.Name);
+                    if (string.Equals(projectName, project.Name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return packageManagerControl;
+                    }
+                }
+                return null;
             });
         }
 

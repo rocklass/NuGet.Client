@@ -6,7 +6,7 @@ using NuGet.PackageManagement.UI;
 
 namespace NuGetVSExtension
 {
-    internal class VsUtility
+    public class VsUtility
     {
         [SuppressMessage("Microsoft.VisualStudio.Threading.Analyzers", "VSTHRD010", Justification = "NuGet/Home#4833 Baseline")]
         public static IEnumerable<IVsWindowFrame> GetDocumentWindows(IVsUIShell uiShell)
