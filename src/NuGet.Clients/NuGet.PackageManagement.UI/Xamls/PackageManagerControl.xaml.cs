@@ -29,7 +29,7 @@ namespace NuGet.PackageManagement.UI
     /// Interaction logic for PackageManagerControl.xaml
     /// </summary>
     [SuppressMessage("Microsoft.VisualStudio.Threading.Analyzers", "VSTHRD010", Justification = "NuGet/Home#4833 Baseline")]
-    public partial class PackageManagerControl : UserControl, IVsWindowSearch
+    public partial class PackageManagerControl : UserControl, IVsWindowSearch, INuGetUIWindow
     {
         private readonly bool _initialized;
 

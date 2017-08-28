@@ -100,6 +100,7 @@
       <DependentUpon>Resources.xaml</DependentUpon>
     </Compile>
     <Compile Include="UserInterfaceService\INuGetUIService.cs" />
+    <Compile Include="UserInterfaceService\INuGetUIWindow.cs" />
     <Compile Include="UserInterfaceService\IUserSettingsManager.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="UserInterfaceService\NuGetUIService.cs" />
