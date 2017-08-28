@@ -687,7 +687,7 @@ namespace NuGet.CommandLine
             if (decimal.TryParse(userVersion, out parsedVersion))
             {
                 var adjustedVersion = (decimal)(((int)(parsedVersion * 10)) / 10F);
-                userVersionString = adjustedVersion.ToString("F1");
+                userVersionString = adjustedVersion.ToString("F1", CultureInfo.InvariantCulture);
             }
 
             // First match by string comparison
