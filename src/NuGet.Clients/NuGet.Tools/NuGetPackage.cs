@@ -119,9 +119,6 @@ namespace NuGetVSExtension
         [Import]
         private INuGetUIFactory UIFactory { get; set; }
 
-        [Import]
-        private INuGetUIService NuGetUIService { get; set; }
-
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
         /// where you can put all the initialization code that rely on services provided by VisualStudio.
@@ -427,7 +424,6 @@ namespace NuGetVSExtension
             var vsWindowSearchHostfactory = await GetServiceAsync(typeof(SVsWindowSearchHostFactory)) as IVsWindowSearchHostFactory;
             var vsShell = await GetServiceAsync(typeof(SVsShell)) as IVsShell4;
             var control = new PackageManagerControl(model, Settings.Value, vsWindowSearchHostfactory, vsShell, OutputConsoleLogger);
-            NuGetUIService.AddPackageManagerControl(control);
 
             var windowPane = new PackageManagerWindowPane(control);
             var guidEditorType = GuidList.guidNuGetEditorType;

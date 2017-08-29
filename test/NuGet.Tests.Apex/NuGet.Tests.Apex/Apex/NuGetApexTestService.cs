@@ -144,9 +144,9 @@ namespace NuGet.Tests.Apex
             }
         }
 
-        public void SeachPackgeFromUI(string searchText)
+        public void SeachPackgeFromUI(string searchText, string project)
         {
-            NuGetApexUITestService.UISearch(searchText);
+            NuGetApexUITestService.UISearch(searchText, project);
         }
     }
 }

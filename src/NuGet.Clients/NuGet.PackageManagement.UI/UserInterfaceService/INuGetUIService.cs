@@ -6,10 +6,8 @@ using System.Threading.Tasks;
 
 namespace NuGet.PackageManagement.UI
 {
-    public interface INuGetUIService
+    internal interface INuGetUIService
     {
-        void AddPackageManagerControl(PackageManagerControl packageManagerControl);
-
-        void SearchPackage(string searchText);
+        INuGetUIWindow GetProjectPackageManagerControl(string projectUniqueName);
     }
 }

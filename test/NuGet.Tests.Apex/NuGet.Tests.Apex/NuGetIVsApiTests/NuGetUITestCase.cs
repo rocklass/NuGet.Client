@@ -23,7 +23,7 @@ namespace NuGet.Tests.Apex
 
             dte.ExecuteCommand("Project.ManageNuGetPackages");
             var nugetTestService = GetNuGetTestService();
-            nugetTestService.SeachPackgeFromUI("json");
+            nugetTestService.SeachPackgeFromUI("json", "TestProject");
         }
     }
 }

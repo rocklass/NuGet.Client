@@ -155,7 +155,7 @@ namespace NuGet.PackageManagement.UI
             LoadItems(selectedPackageItem, token);
         }
 
-        private void UpdateSelectedItem(PackageItemListViewModel selectedItem)
+        internal void UpdateSelectedItem(PackageItemListViewModel selectedItem)
         {
             if (selectedItem != null)
             {

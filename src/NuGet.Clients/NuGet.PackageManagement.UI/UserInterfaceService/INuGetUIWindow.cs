@@ -9,18 +9,18 @@ namespace NuGet.PackageManagement.UI
 {
     internal interface INuGetUIWindow
     {
-        //void Search(string text);
+        void Search(string text);
 
-        //IEnumerable<string> Sources { get; }
+        IEnumerable<PackageSourceMoniker> PackageSources { get; }
 
-        //string ActiveSource { get; set; }
+        PackageSourceMoniker ActiveSource { get; set; }
 
-        //PackageManagerModel Model { get; }
+        PackageManagerModel Model { get; }
 
-        //ItemFilter ActiveFilter { get; set; }
+        ItemFilter ActiveFilter { get; set; }
 
-        //IEnumerable<IPackageSearchMetadata> Packages { get; }
+        IEnumerable<PackageItemListViewModel> Packages { get; }
 
-        //IPackageSearchMetadata FocusedListPackage { get; set; }
+        PackageItemListViewModel FocusedListPackage { get; set; }
     }
 }

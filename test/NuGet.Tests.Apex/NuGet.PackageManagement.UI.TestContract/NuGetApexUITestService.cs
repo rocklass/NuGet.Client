@@ -1,4 +1,3 @@
-using System;
 using System.ComponentModel.Composition;
 using NuGet.VisualStudio;
 
@@ -14,9 +13,19 @@ namespace NuGet.PackageManagement.UI.TestContract
             _nuGetUIService = ServiceLocator.GetInstance<INuGetUIService>();
         }
 
-        public void UISearch(string searchText)
+        public void UISearch(string searchText, string project)
         {
-            _nuGetUIService.SearchPackage(searchText);
+            var packageManagerControl = _nuGetUIService.GetProjectPackageManagerControl(project);
+
+            NuGetUIThreadHelper.JoinableTaskFactory.Run(async () =>
+            {
+                await NuGetUIThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+                packageManagerControl.ActiveFilter = ItemFilter.All;
+                packageManagerControl.Search(searchText);
+            });
+
+            var packages = packageManagerControl.Packages;
         }
 
     }

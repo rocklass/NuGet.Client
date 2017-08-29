@@ -1144,5 +1144,34 @@ namespace NuGet.PackageManagement.UI
             SearchPackagesAndRefreshUpdateCount(_windowSearchHost.SearchQuery.SearchString, useCache: false);
             RefreshConsolidatablePackagesCount();
         }
+
+        #region INuGetUIWindow
+        ItemFilter INuGetUIWindow.ActiveFilter { get => _topPanel.Filter; set => _topPanel.SelectFilter(value); }
+
+        IEnumerable<PackageItemListViewModel> INuGetUIWindow.Packages
+        {
+            get
+            {
+                return NuGetUIThreadHelper.JoinableTaskFactory.Run(async () =>
+                {
+                    var taskCompletionSource = new TaskCompletionSource<bool>();
+
+                    _packageList.LoadItemsCompleted += (sender, args) => taskCompletionSource.TrySetResult(true);
+
+                    await taskCompletionSource.Task;
+
+                    return _packageList.PackageItems;
+                });
+
+            }
+        }
+
+        PackageItemListViewModel INuGetUIWindow.FocusedListPackage { get => _packageList.SelectedPackageItem; set => _packageList.UpdateSelectedItem(value); }
+
+        IEnumerable<PackageSourceMoniker> INuGetUIWindow.PackageSources { get => PackageSources; }
+
+        PackageSourceMoniker INuGetUIWindow.ActiveSource { get => SelectedSource; set => SelectedSource = value; }
+
+        #endregion
     }
 }
