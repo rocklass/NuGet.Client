@@ -19,6 +19,7 @@ using NuGet.Packaging.Core;
 using NuGet.ProjectManagement;
 using NuGet.Protocol.Core.Types;
 using NuGet.Resolver;
+using NuGet.Versioning;
 using NuGet.VisualStudio;
 using Resx = NuGet.PackageManagement.UI;
 using VSThreadHelper = Microsoft.VisualStudio.Shell.ThreadHelper;
@@ -77,7 +78,11 @@ namespace NuGet.PackageManagement.UI
 
         internal IEnumerable<SourceRepository> ActiveSources => SelectedSource?.SourceRepositories ?? Enumerable.Empty<SourceRepository>();
 
+        private event EventHandler _actionCompleted;
+
         public bool IncludePrerelease => _topPanel.CheckboxPrerelease.IsChecked == true;
+
+
 
         public PackageManagerControl(
             PackageManagerModel model,
@@ -743,7 +748,7 @@ namespace NuGet.PackageManagement.UI
                 _packageDetail.Visibility = Visibility.Visible;
                 _packageDetail.DataContext = _detailModel;
 
-                await _detailModel.SetCurrentPackage(selectedPackage, _topPanel.Filter, ()=>_packageList.SelectedItem);
+                await _detailModel.SetCurrentPackage(selectedPackage, _topPanel.Filter, () => _packageList.SelectedItem);
 
                 _packageDetail.ScrollToHome();
 
@@ -1049,6 +1054,7 @@ namespace NuGet.PackageManagement.UI
                 }
                 finally
                 {
+                    _actionCompleted?.Invoke(this, EventArgs.Empty);
                     NuGetEventTrigger.Instance.TriggerEvent(NuGetEvent.PackageOperationEnd);
                     IsEnabled = true;
                 }
@@ -1172,6 +1178,68 @@ namespace NuGet.PackageManagement.UI
 
         PackageSourceMoniker INuGetUIWindow.ActiveSource { get => SelectedSource; set => SelectedSource = value; }
 
+        void INuGetUIWindow.InstallPackage(string packageId, NuGetVersion version)
+        {
+            var action = UserAction.CreateInstallAction(packageId, version);
+
+            ExecuteAction(
+                () =>
+                {
+                    return Model.Context.UIActionEngine.PerformActionAsync(
+                        Model.UIController,
+                        action,
+                        CancellationToken.None);
+                },
+
+                nugetUi => SetOptions(nugetUi, NuGetActionType.Install));
+        }
+
+        void INuGetUIWindow.UninstallPackage(string packageId)
+        {
+            var action = UserAction.CreateUnInstallAction(packageId);
+
+            ExecuteAction(
+                () =>
+                {
+                    return Model.Context.UIActionEngine.PerformActionAsync(
+                        Model.UIController,
+                        action,
+                        CancellationToken.None);
+                },
+
+                nugetUi => SetOptions(nugetUi, NuGetActionType.Uninstall));
+        }
+
+        void INuGetUIWindow.UpdatePackage(List<PackageIdentity> packages)
+        {
+            if (packages.Count == 0)
+            {
+                return;
+            }
+
+            ExecuteAction(
+                () =>
+                {
+                    return Model.Context.UIActionEngine.PerformUpdateAsync(
+                        Model.UIController,
+                        packages,
+                        CancellationToken.None);
+                },
+               nugetUi => SetOptions(nugetUi, NuGetActionType.Update));
+        }
+
+        event EventHandler INuGetUIWindow.ActionCompleted
+        {
+            add
+            {
+                _actionCompleted += value;
+            }
+
+            remove
+            {
+                _actionCompleted -= value;
+            }
+        }
         #endregion
     }
 }

@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using NuGet.Protocol.Core.Types;
+using NuGet.Packaging.Core;
+using NuGet.Versioning;
 
 namespace NuGet.PackageManagement.UI
 {
@@ -22,5 +20,13 @@ namespace NuGet.PackageManagement.UI
         IEnumerable<PackageItemListViewModel> Packages { get; }
 
         PackageItemListViewModel FocusedListPackage { get; set; }
+
+        event EventHandler ActionCompleted;
+
+        void InstallPackage(string packageId, NuGetVersion version);
+
+        void UninstallPackage(string packageId);
+
+        void UpdatePackage(List<PackageIdentity> packages);
     }
 }

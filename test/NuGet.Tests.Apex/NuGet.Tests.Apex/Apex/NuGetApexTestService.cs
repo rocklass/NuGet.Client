@@ -9,6 +9,8 @@ using Microsoft.Test.Apex;
 using Microsoft.Test.Apex.VisualStudio;
 using Microsoft.Test.Apex.VisualStudio.Solution;
 using NuGet.PackageManagement.UI.TestContract;
+using NuGet.Packaging.Core;
+using NuGet.Versioning;
 using NuGet.VisualStudio;
 
 namespace NuGet.Tests.Apex
@@ -146,7 +148,30 @@ namespace NuGet.Tests.Apex
 
         public void SeachPackgeFromUI(string searchText, string project)
         {
-            NuGetApexUITestService.UISearch(searchText, project);
+            var uiProject = NuGetApexUITestService.GetApexTestUIProject(project);
+
+            var packages = uiProject.Search(searchText);
+        }
+
+        public void InstallPackageFromUI(string packageId, string version, string project)
+        {
+            var uiProject = NuGetApexUITestService.GetApexTestUIProject(project);
+
+            uiProject.InstallPackage(packageId, version);
+        }
+
+        public void UninstallPackageFromUI(string packageId, string project)
+        {
+            var uiProject = NuGetApexUITestService.GetApexTestUIProject(project);
+
+            uiProject.UninstallPackage(packageId);
+        }
+
+        public void UpdatePackageFromUI(string packageId, string version, string project)
+        {
+            var uiProject = NuGetApexUITestService.GetApexTestUIProject(project);
+
+            uiProject.UpdatePackage(new List<PackageIdentity>() { new PackageIdentity(packageId, NuGetVersion.Parse(version)) });
         }
     }
 }
